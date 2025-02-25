@@ -12,3 +12,10 @@ docs/
 
 # Dotenv file
 .env
+
+node_modules/
+yarn.lock
+.vscode/
+.gas-snapshot
+coverage-report
+lcov.info
