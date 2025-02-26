@@ -6,5 +6,8 @@
   "scripts": {
     "lint": "solhint 'src/**/*.sol' 'script/**/*.sol' 'test/**/*.sol'",
     "lint:fix": "solhint --fix 'src/**/*.sol' 'script/**/*.sol' 'test/**/*.sol'"
+  },
+  "dependencies": {
+    "@openzeppelin/upgrades-core": "^1.42.1"
   }
 }
