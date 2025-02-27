@@ -40,10 +40,12 @@ coverage-debug :; forge coverage --report debug --fork-url ${FORK_URL}
 clean :; forge clean
 format :; forge fmt
 format-check :; forge fmt --check
-# deploy :; forge script script/Deploy.s.sol --rpc-url ${HOLESKY_RPC_URL} --private-key ${PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${HOLESKY_BLOCKSCOUT_API_URL} --verifier-api-key ${HOLESKY_BLOCKSCOUT_API_KEY}
+deploy :; forge script script/KrnlNFT.s.sol --rpc-url ${HOLESKY_RPC_URL} --broadcast --verify --verifier blockscout --verifier-url ${HOLESKY_BLOCKSCOUT_API_URL} --verifier-api-key ${HOLESKY_BLOCKSCOUT_API_KEY}
+deploy-sepolia :; forge script script/KrnlNFT.s.sol --rpc-url ${SEPOLIA_RPC_URL} --broadcast --verify --verifier-url ${SEPOLIA_API_URL} --verifier-api-key ${SEPOLIA_API_KEY}
 
 coverage-html:
 	@echo "Running coverage..."
+	forge build;\
 	forge coverage --report lcov --fork-url ${FORK_URL}
 	@if [ "`uname`" = "Darwin" ]; then \
 		lcov --ignore-errors inconsistent --remove lcov.info 'script/*' 'test/*' --output-file lcov.info; \

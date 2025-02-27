@@ -10,8 +10,7 @@
     "max-line-length": ["warn", 160],
     "avoid-suicide": "error",
     "avoid-sha3": "warn",
-    "not-rely-on-time": "off",
-    "private-vars-leading-underscore": "off",
-    "reason-string": ["warn", { "maxLength": 64 }]
+    "reason-string": ["warn", { "maxLength": 64 }],
+    "func-name-mixedcase": "off"
   }
 }

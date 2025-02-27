@@ -36,6 +36,24 @@ jobs:
       - name: Install lcov
         run: sudo apt-get -y install lcov
 
+      - name: Set yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Restore yarn cache
+        uses: actions/cache@v4
+        id: yarn-cache
+        with:
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+            ${{ runner.os }}-yarn-
+
+      - name: Install node.js dependencies
+        run: yarn --frozen-lockfile
+
       - name: Run generate html report
         run: |
           make coverage-html
