@@ -11,12 +11,16 @@ contract DeployScript is Script {
         string memory baseURI = vm.envString("BASE_URI");
         uint256 totalSupply = vm.envUint("TOTAL_SUPPLY");
 
+        vm.startBroadcast();
+
         address _proxyAddress = Upgrades.deployTransparentProxy(
             "KrnlNFT.sol", msg.sender, abi.encodeCall(KrnlNFT.initialize, (baseURI, totalSupply, taAddress))
         );
 
         // Get the implementation address
         address implementationAddress = Upgrades.getImplementationAddress(_proxyAddress);
+
+        vm.stopBroadcast();
 
         return (implementationAddress, _proxyAddress);
     }
