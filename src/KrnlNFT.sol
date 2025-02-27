@@ -16,7 +16,7 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable {
         uint8 eyeBrows;
         uint8 eye;
         uint8 mouth;
-        uint8 clouthing;
+        uint8 clothing;
         uint8 handItem;
         uint8 shoes;
     }
@@ -41,10 +41,12 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable {
     mapping(uint256 => Metadata) public metadata;
 
     event MetadataSet(uint256 tokenId, Metadata metadata);
+    event Initialized(string baseURI, uint256 totalSupply, address taAddress);
 
     error MaxSupplyReached();
     error NotTA();
     error TokenIdOutOfBounds();
+    error AddressZero();
 
     modifier onlyTA() {
         if (msg.sender != taAddress) {
@@ -66,29 +68,31 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable {
      * totalSupply_ - The maximum number of tokens
      */
     function initialize(string memory baseURI_, uint256 totalSupply_, address _taAddress) public initializer {
+        if (_taAddress == address(0)) {
+            revert AddressZero();
+        }
         __ERC721_init("KrnlNFT", "KRN");
         __Ownable_init(msg.sender);
-        // Initialize with token counter at zero
-        currentSupply = 0;
         // Set the baseURI
         baseURI = baseURI_;
         // Set the maximum number of tokens
         totalSupply = totalSupply_;
         // Set the TA address
         taAddress = _taAddress;
+        emit Initialized(baseURI_, totalSupply_, _taAddress);
     }
 
     /**
      * @dev Mint an NFT
      * @param _metadata - The metadata
      */
-    function mint(Metadata memory _metadata) public onlyTA {
+    function mint(address to, Metadata memory _metadata) public onlyTA {
         if (currentSupply >= totalSupply) {
             revert MaxSupplyReached();
         }
-        _safeMint(msg.sender, currentSupply);
-        setMetadata(currentSupply, _metadata);
+        _safeMint(to, currentSupply);
         currentSupply++;
+        setMetadata(currentSupply - 1, _metadata);
     }
 
     /**
