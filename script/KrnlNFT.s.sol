@@ -7,13 +7,14 @@ import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract DeployScript is Script {
     function run() external returns (address, address) {
-        //we need to declare the sender's private key here to sign the deploy transaction
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        vm.startBroadcast(deployerPrivateKey);
+        address taAddress = vm.envAddress("TA_ADDRESS");
+        string memory baseURI = vm.envString("BASE_URI");
+        uint256 totalSupply = vm.envUint("TOTAL_SUPPLY");
 
-        // Deploy the upgradeable contract
+        vm.startBroadcast();
+
         address _proxyAddress = Upgrades.deployTransparentProxy(
-            "KrnlNFT.sol", msg.sender, abi.encodeCall(KrnlNFT.initialize, ("https://example.com/", 1))
+            "KrnlNFT.sol", msg.sender, abi.encodeCall(KrnlNFT.initialize, (baseURI, totalSupply, taAddress))
         );
 
         // Get the implementation address
