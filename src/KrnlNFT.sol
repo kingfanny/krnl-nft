@@ -122,7 +122,7 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL {
         if (tokenId > currentSupply) {
             revert TokenIdOutOfBounds();
         } else if (tokenId == currentSupply) {
-            Metadata memory _metadata;
+            Metadata memory _metadata = _getBaseMetadata();
             if (gitCoinScore > 10) {
                 _metadata.traits.headWears = 1;
             }
@@ -193,5 +193,14 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL {
      */
     function getMetadata(uint256 tokenId) public view tokenExists(tokenId) returns (Metadata memory) {
         return metadata[tokenId];
+    }
+
+    function _getBaseMetadata() internal pure returns (Metadata memory) {
+        return Metadata({
+            name: "KrnlNFT",
+            description: "KrnlNFT",
+            image: "https://krnl.xyz/krnl.png",
+            traits: Trait({headWears: 0, faceWears: 0, eyeBrows: 0, eye: 0, mouth: 0, clothing: 0, handItem: 0, shoes: 0})
+        });
     }
 }
