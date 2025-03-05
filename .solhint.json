@@ -3,7 +3,7 @@
   "plugins": [],
   "rules": {
     "compiler-version": ["error", "^0.8.0"],
-    "code-complexity": "warn",
+    "code-complexity": ["warn", 10],
     "const-name-snakecase": "warn",
     "function-max-lines": "warn",
     "func-visibility": ["warn", { "ignoreConstructors": true }],
