@@ -47,7 +47,6 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL {
 
     error MaxSupplyReached();
     error TokenIdOutOfBounds();
-    error AddressZero();
     error KernelResponsesEmpty();
     error NotOwner();
 
@@ -68,9 +67,6 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL {
         public
         initializer
     {
-        if (tokenAuthorityPublicKey_ == address(0)) {
-            revert AddressZero();
-        }
         __ERC721_init("KrnlNFT", "KRN");
         __Ownable_init(msg.sender);
         __KRNL_init(tokenAuthorityPublicKey_);
@@ -98,7 +94,7 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL {
         for (uint256 i = 0; i < kernelResponses.length; i++) {
             emit LogKernelResponse(kernelResponses[i].kernelId, kernelResponses[i].result);
 
-            if (kernelResponses[i].kernelId == 935) {
+            if (kernelResponses[i].kernelId == 1147) {
                 if (kernelResponses[i].result.length >= 32) {
                     gitCoinScore = abi.decode(kernelResponses[i].result, (uint256));
                 } else {
@@ -106,13 +102,13 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL {
                 }
             }
 
-            if (kernelResponses[i].kernelId == 947) {
-                if (kernelResponses[i].result.length >= 32) {
-                    galxeScore = abi.decode(kernelResponses[i].result, (uint256));
-                } else {
-                    emit ErrorLog("Invalid galxe score decoding");
-                }
-            }
+            // if (kernelResponses[i].kernelId == 947) {
+            //     if (kernelResponses[i].result.length >= 32) {
+            //         galxeScore = abi.decode(kernelResponses[i].result, (uint256));
+            //     } else {
+            //         emit ErrorLog("Invalid galxe score decoding");
+            //     }
+            // }
         }
         updateMetadata(receiver, tokenId, gitCoinScore, galxeScore);
         return false;
