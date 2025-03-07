@@ -8,7 +8,7 @@ import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 contract DeployScript is Script {
     function run() external returns (address, address) {
         address tokenAuthorityPublicKey = vm.envAddress("TOKEN_AUTHORITY_PUBLIC_KEY");
-        string memory baseURI = vm.envString("BASE_URI");
+        string memory traitMetadataURI = vm.envString("TRAIT_METADATA_URI");
         uint256 totalSupply = vm.envUint("TOTAL_SUPPLY");
 
         vm.startBroadcast();
@@ -16,7 +16,7 @@ contract DeployScript is Script {
         address _proxyAddress = Upgrades.deployTransparentProxy(
             "KrnlNFT.sol",
             msg.sender,
-            abi.encodeCall(KrnlNFT.initialize, (baseURI, totalSupply, tokenAuthorityPublicKey))
+            abi.encodeCall(KrnlNFT.initialize, (traitMetadataURI, totalSupply, tokenAuthorityPublicKey))
         );
 
         // Get the implementation address
