@@ -10,60 +10,26 @@ contract KrnlNFTTest is Test {
     address public owner;
     address public tokenAuthorityPublicKey;
     address public user;
-    KrnlNFT.Metadata public mockMetadata;
-    KrnlNFT.Trait public mockTraits;
-    KrnlNFT.Metadata public mockMetadata2;
-    KrnlNFT.Trait public mockTraits2;
 
     function setUp() public {
         owner = makeAddr("owner");
         user = makeAddr("user");
         tokenAuthorityPublicKey = makeAddr("tokenAuthorityPublicKey");
-        mockTraits = KrnlNFT.Trait({
-            headWears: 0,
-            faceWears: 0,
-            eyeBrows: 0,
-            eye: 0,
-            mouth: 0,
-            clothing: 0,
-            handItem: 0,
-            shoes: 0
-        });
-        mockTraits2 = KrnlNFT.Trait({
-            headWears: 1,
-            faceWears: 1,
-            eyeBrows: 1,
-            eye: 1,
-            mouth: 1,
-            clothing: 1,
-            handItem: 1,
-            shoes: 1
-        });
-        mockMetadata =
-            KrnlNFT.Metadata({name: "Test", description: "Test", image: "https://example.com/test", traits: mockTraits});
-        mockMetadata2 = KrnlNFT.Metadata({
-            name: "Test2",
-            description: "Test2",
-            image: "https://example.com/test2",
-            traits: mockTraits2
-        });
 
         vm.startPrank(owner);
         address proxy = Upgrades.deployTransparentProxy(
             "KrnlNFT.sol",
             msg.sender,
-            abi.encodeCall(KrnlNFT.initialize, ("https://example.com/", 1, tokenAuthorityPublicKey))
+            abi.encodeCall(KrnlNFT.initialize, ("https://example.com/", 100, tokenAuthorityPublicKey))
         );
         vm.stopPrank();
 
         krnlNFT = KrnlNFT(proxy);
-        // vm.prank(tokenAuthorityPublicKey);
-        // krnlNFT.mint(user, mockMetadata);
     }
 
     function test_base() public view {
-        assertEq(krnlNFT.baseURI(), "https://example.com/");
-        assertEq(krnlNFT.totalSupply(), 1);
+        assertEq(krnlNFT.getTraitMetadataURI(), "https://example.com/");
+        assertEq(krnlNFT.totalSupply(), 100);
         assertEq(krnlNFT.owner(), owner);
         assertEq(krnlNFT.tokenAuthorityPublicKey(), tokenAuthorityPublicKey);
     }
