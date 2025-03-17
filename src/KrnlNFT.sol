@@ -83,6 +83,10 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
     function updateMetadata(address receiver, uint256 tokenId, uint256 gitCoinScore, uint256 galxeScore) private {
         if (tokenId == currentSupply) {
             mint(receiver);
+        } else if (tokenId < currentSupply) {
+            if (receiver != ownerOf(tokenId)) {
+                revert NotOwner();
+            }
         }
         bytes32[] memory traitKeys = new bytes32[](3);
         traitKeys[0] = keccak256("gitcoin");

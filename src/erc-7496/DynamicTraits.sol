@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.24;
 
 import {IERC7496} from "./interfaces/IERC7496.sol";
 import {DynamicTraitsStorage} from "./libraries/DynamicTraitsStorage.sol";
