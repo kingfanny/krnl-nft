@@ -40,6 +40,7 @@ clean :; forge clean
 format :; forge fmt
 format-check :; forge fmt --check
 deploy-base-sepolia :; forge script script/KrnlNFT.s.sol --rpc-url ${BASE_SEPOLIA_RPC_URL} --private-key ${PRIVATE_KEY} --broadcast --verify --verifier-url ${BASE_SEPOLIA_API_URL} --verifier-api-key ${BASE_SEPOLIA_API_KEY}
+deploy-sepolia :; forge script script/KrnlNFT.s.sol --rpc-url ${SEPOLIA_RPC_URL} --private-key ${PRIVATE_KEY} --broadcast --verify --verifier-url ${SEPOLIA_API_URL} --verifier-api-key ${SEPOLIA_API_KEY}
 
 coverage-html:
 	@echo "Running coverage..."

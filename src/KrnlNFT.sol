@@ -60,7 +60,7 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
         for (uint256 i = 0; i < kernelResponses.length; i++) {
             emit LogKernelResponse(kernelResponses[i].kernelId, kernelResponses[i].result);
 
-            if (kernelResponses[i].kernelId == 1147) {
+            if (kernelResponses[i].kernelId == 191) {
                 if (kernelResponses[i].result.length >= 32) {
                     gitCoinScore = abi.decode(kernelResponses[i].result, (uint256));
                 } else {
