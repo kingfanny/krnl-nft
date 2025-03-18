@@ -32,6 +32,7 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
     /**
      * @dev Initialize KrnlNFT
      * traitMetadataURI_ - The metadata URI
+     * contractURI_ - The contract URI
      * maxSupply_ - The maximum number of tokens
      * tokenAuthorityPublicKey_ - The address of the token authority public key
      */
