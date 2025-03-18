@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721EnumerableUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {KRNL} from "./KRNL.sol";
@@ -10,15 +11,18 @@ import {DynamicTraits} from "./erc-7496/DynamicTraits.sol";
 /**
  * @dev Implementation of an ERC721 with metadata
  */
-contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
+contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
     /// @notice The token ID counter
     uint256 public currentSupply;
     /// @notice The maximum number of tokens
-    uint256 public totalSupply;
+    uint256 public maxSupply;
+    // @notice The contractURI
+    string public contractURI;
 
     event LogKrnlPayload(bytes kernelResponses, bytes kernelParams);
     event LogKernelResponse(uint256 kernelId, bytes result);
     event ErrorLog(string message);
+    event ContractURIUpdated();
 
     error MaxSupplyReached();
     error KernelResponsesEmpty();
@@ -28,18 +32,21 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
     /**
      * @dev Initialize KrnlNFT
      * traitMetadataURI_ - The metadata URI
-     * totalSupply_ - The maximum number of tokens
+     * maxSupply_ - The maximum number of tokens
      * tokenAuthorityPublicKey_ - The address of the token authority public key
      */
-    function initialize(string memory traitMetadataURI_, uint256 totalSupply_, address tokenAuthorityPublicKey_)
-        public
-        initializer
-    {
+    function initialize(
+        string memory traitMetadataURI_,
+        string memory contractURI_,
+        uint256 maxSupply_,
+        address tokenAuthorityPublicKey_
+    ) public initializer {
         __ERC721_init("KrnlNFT", "KRN");
         __Ownable_init(msg.sender);
         __KRNL_init(tokenAuthorityPublicKey_);
         _setTraitMetadataURI(traitMetadataURI_);
-        totalSupply = totalSupply_;
+        setContractURI(contractURI_);
+        maxSupply = maxSupply_;
     }
 
     function protectedFunction(KrnlPayload memory krnlPayload, address receiver, uint256 tokenId)
@@ -80,6 +87,13 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
         return false;
     }
 
+    /**
+     * @dev Update the metadata for an NFT
+     * @param receiver - The address of the receiver
+     * @param tokenId - The token ID
+     * @param gitCoinScore - The gitcoin score
+     * @param galxeScore - The galxe score
+     */
     function updateMetadata(address receiver, uint256 tokenId, uint256 gitCoinScore, uint256 galxeScore) private {
         if (tokenId == currentSupply) {
             mint(receiver);
@@ -104,7 +118,7 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
      * @param to - The address to mint the NFT to
      */
     function mint(address to) private {
-        if (currentSupply >= totalSupply) {
+        if (currentSupply >= maxSupply) {
             revert MaxSupplyReached();
         }
         _safeMint(to, currentSupply);
@@ -178,6 +192,24 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
     }
 
     /**
+     * @dev Set the contract URI
+     * @param uri - The new contract URI
+     */
+    function setContractURI(string memory uri) public onlyOwner {
+        contractURI = uri;
+        emit ContractURIUpdated();
+    }
+
+    function getTokenIdsByOwner(address owner) public view returns (uint256[] memory tokenIds) {
+        uint256 balance = balanceOf(owner);
+        tokenIds = new uint256[](balance);
+        for (uint256 i = 0; i < balance; i++) {
+            tokenIds[i] = tokenOfOwnerByIndex(owner, i);
+        }
+        return tokenIds;
+    }
+
+    /**
      * @dev Check if the contract supports an interface
      * @param interfaceId - The interface ID
      * @return True if the contract supports the interface, false otherwise
@@ -185,9 +217,10 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721Upgradeable, DynamicTraits)
+        override(ERC721EnumerableUpgradeable, DynamicTraits)
         returns (bool)
     {
-        return ERC721Upgradeable.supportsInterface(interfaceId) || DynamicTraits.supportsInterface(interfaceId);
+        return
+            ERC721EnumerableUpgradeable.supportsInterface(interfaceId) || DynamicTraits.supportsInterface(interfaceId);
     }
 }
