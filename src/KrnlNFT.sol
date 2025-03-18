@@ -16,7 +16,7 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
     uint256 public currentSupply;
     /// @notice The maximum number of tokens
     uint256 public maxSupply;
-    // @notice The contractURI
+    /// @notice The contract URI
     string public contractURI;
 
     event LogKrnlPayload(bytes kernelResponses, bytes kernelParams);
