@@ -20,7 +20,10 @@ contract KrnlNFTTest is Test {
         address proxy = Upgrades.deployTransparentProxy(
             "KrnlNFT.sol",
             msg.sender,
-            abi.encodeCall(KrnlNFT.initialize, ("https://example.com/", 100, tokenAuthorityPublicKey))
+            abi.encodeCall(
+                KrnlNFT.initialize,
+                ("https://example.com/metadata", "https://example.com/contract", 100, tokenAuthorityPublicKey)
+            )
         );
         vm.stopPrank();
 
@@ -28,7 +31,8 @@ contract KrnlNFTTest is Test {
     }
 
     function test_base() public view {
-        assertEq(krnlNFT.getTraitMetadataURI(), "https://example.com/");
+        assertEq(krnlNFT.getTraitMetadataURI(), "https://example.com/metadata");
+        assertEq(krnlNFT.contractURI(), "https://example.com/contract");
         assertEq(krnlNFT.totalSupply(), 100);
         assertEq(krnlNFT.owner(), owner);
         assertEq(krnlNFT.tokenAuthorityPublicKey(), tokenAuthorityPublicKey);

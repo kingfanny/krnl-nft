@@ -9,6 +9,7 @@ contract DeployScript is Script {
     function run() external returns (address, address) {
         address tokenAuthorityPublicKey = vm.envAddress("TOKEN_AUTHORITY_PUBLIC_KEY");
         string memory traitMetadataURI = vm.envString("TRAIT_METADATA_URI");
+        string memory contractURI = vm.envString("CONTRACT_URI");
         uint256 totalSupply = vm.envUint("TOTAL_SUPPLY");
 
         vm.startBroadcast();
@@ -16,7 +17,7 @@ contract DeployScript is Script {
         address _proxyAddress = Upgrades.deployTransparentProxy(
             "KrnlNFT.sol",
             msg.sender,
-            abi.encodeCall(KrnlNFT.initialize, (traitMetadataURI, totalSupply, tokenAuthorityPublicKey))
+            abi.encodeCall(KrnlNFT.initialize, (traitMetadataURI, contractURI, totalSupply, tokenAuthorityPublicKey))
         );
 
         // Get the implementation address

@@ -15,10 +15,13 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
     uint256 public currentSupply;
     /// @notice The maximum number of tokens
     uint256 public totalSupply;
+    // @notice The contractURI
+    string public contractURI;
 
     event LogKrnlPayload(bytes kernelResponses, bytes kernelParams);
     event LogKernelResponse(uint256 kernelId, bytes result);
     event ErrorLog(string message);
+    event ContractURIUpdated();
 
     error MaxSupplyReached();
     error KernelResponsesEmpty();
@@ -31,14 +34,17 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
      * totalSupply_ - The maximum number of tokens
      * tokenAuthorityPublicKey_ - The address of the token authority public key
      */
-    function initialize(string memory traitMetadataURI_, uint256 totalSupply_, address tokenAuthorityPublicKey_)
-        public
-        initializer
-    {
+    function initialize(
+        string memory traitMetadataURI_,
+        string memory contractURI_,
+        uint256 totalSupply_,
+        address tokenAuthorityPublicKey_
+    ) public initializer {
         __ERC721_init("KrnlNFT", "KRN");
         __Ownable_init(msg.sender);
         __KRNL_init(tokenAuthorityPublicKey_);
         _setTraitMetadataURI(traitMetadataURI_);
+        setContractURI(contractURI_);
         totalSupply = totalSupply_;
     }
 
@@ -80,6 +86,13 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
         return false;
     }
 
+    /**
+     * @dev Update the metadata for an NFT
+     * @param receiver - The address of the receiver
+     * @param tokenId - The token ID
+     * @param gitCoinScore - The gitcoin score
+     * @param galxeScore - The galxe score
+     */
     function updateMetadata(address receiver, uint256 tokenId, uint256 gitCoinScore, uint256 galxeScore) private {
         if (tokenId == currentSupply) {
             mint(receiver);
@@ -175,6 +188,15 @@ contract KrnlNFT is ERC721Upgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
     function setTraitMetadataURI(string calldata uri) external onlyOwner {
         // Set the new metadata URI.
         _setTraitMetadataURI(uri);
+    }
+
+    /**
+     * @dev Set the contract URI
+     * @param uri - The new contract URI
+     */
+    function setContractURI(string memory uri) public onlyOwner {
+        contractURI = uri;
+        emit ContractURIUpdated();
     }
 
     /**
