@@ -15,11 +15,13 @@ abstract contract KRNL is OwnableUpgradeable {
 
     struct KernelParameter {
         uint8 resolverType;
+        uint256 kernelId;
         bytes parameters;
         string err;
     }
 
     struct KernelResponse {
+        uint8 resolverType;
         uint256 kernelId;
         bytes result;
         string err;
