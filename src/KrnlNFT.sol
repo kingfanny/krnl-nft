@@ -18,16 +18,25 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
     uint256 public maxSupply;
     /// @notice The contract URI
     string public contractURI;
+    /// @notice The trait prices
+    mapping(bytes32 => mapping(uint256 => uint256)) public traitPrices;
+    /// @notice The unlocked traits
+    mapping(uint256 => mapping(bytes32 => mapping(uint256 => bool))) public unlockedTraits;
 
     event LogKrnlPayload(bytes kernelResponses, bytes kernelParams);
     event LogKernelResponse(uint256 kernelId, bytes result);
     event ErrorLog(string message);
     event ContractURIUpdated();
+    event TraitUnlocked(uint256 tokenId, bytes32 traitKey, uint256 traitId);
+    event TraitPriceUpdated(bytes32 traitKey, uint256 traitId, uint256 traitPrice);
 
     error MaxSupplyReached();
     error KernelResponsesEmpty();
     error NotOwner();
     error TraitKeysAndValuesLengthMismatch();
+    error TraitAlreadyUnlocked();
+    error TraitPriceTooHigh();
+    error TraitIdsAndPricesLengthMismatch();
 
     /**
      * @dev Initialize KrnlNFT
@@ -50,11 +59,21 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
         maxSupply = maxSupply_;
     }
 
-    function protectedFunction(KrnlPayload memory krnlPayload, address receiver, uint256 tokenId)
-        external
-        onlyAuthorized(krnlPayload, abi.encode(receiver, tokenId))
-        returns (bool)
-    {
+    /**
+     * @dev Protected function to update the metadata for an NFT
+     * @param krnlPayload - The KrnlPayload
+     * @param scoreKeys - The score keys
+     * @param scores - The scores
+     * @param receiver - The address of the receiver
+     * @param tokenId - The token ID
+     */
+    function protectedFunction(
+        KrnlPayload memory krnlPayload,
+        bytes32[] memory scoreKeys,
+        uint256[] memory scores,
+        address receiver,
+        uint256 tokenId
+    ) external onlyAuthorized(krnlPayload, abi.encode(scoreKeys, scores, receiver, tokenId)) returns (bool) {
         if (krnlPayload.kernelResponses.length == 0) {
             revert KernelResponsesEmpty();
         }
@@ -63,7 +82,6 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
         KernelResponse[] memory kernelResponses = abi.decode(krnlPayload.kernelResponses, (KernelResponse[]));
 
         uint256 gitCoinScore = 0;
-        uint256 galxeScore = 0;
 
         for (uint256 i = 0; i < kernelResponses.length; i++) {
             emit LogKernelResponse(kernelResponses[i].kernelId, kernelResponses[i].result);
@@ -75,27 +93,26 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
                     emit ErrorLog("Invalid gitcoin score decoding");
                 }
             }
-
-            if (kernelResponses[i].kernelId == 947) {
-                if (kernelResponses[i].result.length >= 32) {
-                    galxeScore = abi.decode(kernelResponses[i].result, (uint256));
-                } else {
-                    emit ErrorLog("Invalid galxe score decoding");
-                }
-            }
         }
-        updateMetadata(receiver, tokenId, gitCoinScore, galxeScore);
+        updateMetadata(scoreKeys, scores, receiver, tokenId, gitCoinScore);
         return false;
     }
 
     /**
      * @dev Update the metadata for an NFT
+     * @param scoreKeys - The score keys
+     * @param scores - The scores
      * @param receiver - The address of the receiver
      * @param tokenId - The token ID
      * @param gitCoinScore - The gitcoin score
-     * @param galxeScore - The galxe score
      */
-    function updateMetadata(address receiver, uint256 tokenId, uint256 gitCoinScore, uint256 galxeScore) private {
+    function updateMetadata(
+        bytes32[] memory scoreKeys,
+        uint256[] memory scores,
+        address receiver,
+        uint256 tokenId,
+        uint256 gitCoinScore
+    ) private {
         if (tokenId == currentSupply) {
             mint(receiver);
         } else if (tokenId < currentSupply) {
@@ -103,15 +120,68 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
                 revert NotOwner();
             }
         }
-        bytes32[] memory traitKeys = new bytes32[](3);
-        traitKeys[0] = keccak256("gitcoin");
-        traitKeys[1] = keccak256("galxe");
-        traitKeys[2] = keccak256("score");
-        bytes32[] memory traitValues = new bytes32[](3);
-        traitValues[0] = bytes32(gitCoinScore);
-        traitValues[1] = bytes32(galxeScore);
-        traitValues[2] = bytes32(gitCoinScore + galxeScore);
-        setTraits(tokenId, traitKeys, traitValues);
+        bytes32 traitKey = keccak256("gitcoin");
+        bytes32 traitValue = bytes32(gitCoinScore);
+        setTrait(tokenId, traitKey, traitValue);
+        uint256 length = scoreKeys.length;
+        for (uint256 i = 0; i < length; i++) {
+            traitValue = bytes32(scores[i]);
+            setTrait(tokenId, scoreKeys[i], traitValue);
+        }
+    }
+
+    /**
+     * @dev Unlock a trait for an NFT
+     * @param tokenId - The token ID
+     * @param traitKey - The trait key
+     * @param traitId - The trait ID
+     */
+    function unlockTrait(uint256 tokenId, bytes32 traitKey, uint256 traitId) external {
+        if (msg.sender != ownerOf(tokenId)) {
+            revert NotOwner();
+        }
+        uint256 traitPrice = traitPrices[traitKey][traitId];
+        uint256 traitValue = uint256(getTraitValue(tokenId, traitKey));
+        if (unlockedTraits[tokenId][traitKey][traitId]) {
+            revert TraitAlreadyUnlocked();
+        }
+        if (traitValue < traitPrice) {
+            revert TraitPriceTooHigh();
+        }
+        traitValue -= traitPrice;
+        setTrait(tokenId, traitKey, bytes32(traitValue));
+        unlockedTraits[tokenId][traitKey][traitId] = true;
+        emit TraitUnlocked(tokenId, traitKey, traitId);
+    }
+
+    /**
+     * @dev Set the price for a trait
+     * @param traitKey - The trait key
+     * @param traitId - The trait ID
+     * @param traitPrice - The trait price
+     */
+    function setTraitPrice(bytes32 traitKey, uint256 traitId, uint256 traitPrice) public onlyOwner {
+        traitPrices[traitKey][traitId] = traitPrice;
+        emit TraitPriceUpdated(traitKey, traitId, traitPrice);
+    }
+
+    /**
+     * @dev Set the prices for multiple traits
+     * @param traitKey - The trait key
+     * @param traitIds - The trait IDs
+     * @param traitPriceInputs - The trait prices
+     */
+    function setTraitPrices(bytes32 traitKey, uint256[] memory traitIds, uint256[] memory traitPriceInputs)
+        external
+        onlyOwner
+    {
+        uint256 length = traitIds.length;
+        if (length != traitPriceInputs.length) {
+            revert TraitIdsAndPricesLengthMismatch();
+        }
+        for (uint256 i = 0; i < length; i++) {
+            setTraitPrice(traitKey, traitIds[i], traitPriceInputs[i]);
+        }
     }
 
     /**
