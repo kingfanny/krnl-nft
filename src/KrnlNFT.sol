@@ -18,8 +18,6 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
     uint256 public maxSupply;
     /// @notice The contract URI
     string public contractURI;
-    /// @notice The trait prices
-    mapping(bytes32 => mapping(uint256 => uint256)) public traitPrices;
     /// @notice The unlocked traits
     mapping(uint256 => mapping(bytes32 => mapping(uint256 => bool))) public unlockedTraits;
 
@@ -28,15 +26,12 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
     event ErrorLog(string message);
     event ContractURIUpdated();
     event TraitUnlocked(uint256 tokenId, bytes32 traitKey, uint256 traitId);
-    event TraitPriceUpdated(bytes32 traitKey, uint256 traitId, uint256 traitPrice);
 
     error MaxSupplyReached();
     error KernelResponsesEmpty();
     error NotOwner();
     error TraitKeysAndValuesLengthMismatch();
-    error TraitAlreadyUnlocked();
-    error TraitPriceTooHigh();
-    error TraitIdsAndPricesLengthMismatch();
+    error TraitNotUnlocked();
 
     /**
      * @dev Initialize KrnlNFT
@@ -70,7 +65,7 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
     function protectedFunction(
         KrnlPayload memory krnlPayload,
         bytes32[] memory scoreKeys,
-        uint256[] memory scores,
+        uint256[][] memory scores,
         address receiver,
         uint256 tokenId
     ) external onlyAuthorized(krnlPayload, abi.encode(scoreKeys, scores, receiver, tokenId)) returns (bool) {
@@ -94,7 +89,7 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
                 }
             }
         }
-        updateMetadata(scoreKeys, scores, receiver, tokenId, gitCoinScore);
+        updateMetadata(scoreKeys, scores, receiver, tokenId);
         return false;
     }
 
@@ -104,15 +99,10 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
      * @param scores - The scores
      * @param receiver - The address of the receiver
      * @param tokenId - The token ID
-     * @param gitCoinScore - The gitcoin score
      */
-    function updateMetadata(
-        bytes32[] memory scoreKeys,
-        uint256[] memory scores,
-        address receiver,
-        uint256 tokenId,
-        uint256 gitCoinScore
-    ) private {
+    function updateMetadata(bytes32[] memory scoreKeys, uint256[][] memory scores, address receiver, uint256 tokenId)
+        private
+    {
         if (tokenId == currentSupply) {
             mint(receiver);
         } else if (tokenId < currentSupply) {
@@ -120,67 +110,16 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
                 revert NotOwner();
             }
         }
-        bytes32 traitKey = keccak256("gitcoin");
-        bytes32 traitValue = bytes32(gitCoinScore);
-        setTrait(tokenId, traitKey, traitValue);
         uint256 length = scoreKeys.length;
-        for (uint256 i = 0; i < length; i++) {
-            traitValue = bytes32(scores[i]);
-            setTrait(tokenId, scoreKeys[i], traitValue);
-        }
-    }
-
-    /**
-     * @dev Unlock a trait for an NFT
-     * @param tokenId - The token ID
-     * @param traitKey - The trait key
-     * @param traitId - The trait ID
-     */
-    function unlockTrait(uint256 tokenId, bytes32 traitKey, uint256 traitId) external {
-        if (msg.sender != ownerOf(tokenId)) {
-            revert NotOwner();
-        }
-        uint256 traitPrice = traitPrices[traitKey][traitId];
-        uint256 traitValue = uint256(getTraitValue(tokenId, traitKey));
-        if (unlockedTraits[tokenId][traitKey][traitId]) {
-            revert TraitAlreadyUnlocked();
-        }
-        if (traitValue < traitPrice) {
-            revert TraitPriceTooHigh();
-        }
-        traitValue -= traitPrice;
-        setTrait(tokenId, traitKey, bytes32(traitValue));
-        unlockedTraits[tokenId][traitKey][traitId] = true;
-        emit TraitUnlocked(tokenId, traitKey, traitId);
-    }
-
-    /**
-     * @dev Set the price for a trait
-     * @param traitKey - The trait key
-     * @param traitId - The trait ID
-     * @param traitPrice - The trait price
-     */
-    function setTraitPrice(bytes32 traitKey, uint256 traitId, uint256 traitPrice) public onlyOwner {
-        traitPrices[traitKey][traitId] = traitPrice;
-        emit TraitPriceUpdated(traitKey, traitId, traitPrice);
-    }
-
-    /**
-     * @dev Set the prices for multiple traits
-     * @param traitKey - The trait key
-     * @param traitIds - The trait IDs
-     * @param traitPriceInputs - The trait prices
-     */
-    function setTraitPrices(bytes32 traitKey, uint256[] memory traitIds, uint256[] memory traitPriceInputs)
-        external
-        onlyOwner
-    {
-        uint256 length = traitIds.length;
-        if (length != traitPriceInputs.length) {
-            revert TraitIdsAndPricesLengthMismatch();
+        if (length != scores.length) {
+            revert TraitKeysAndValuesLengthMismatch();
         }
         for (uint256 i = 0; i < length; i++) {
-            setTraitPrice(traitKey, traitIds[i], traitPriceInputs[i]);
+            uint256 scoreLength = scores[i].length;
+            for (uint256 j = 0; j < scoreLength; j++) {
+                unlockedTraits[tokenId][scoreKeys[i]][scores[i][j]] = true;
+                emit TraitUnlocked(tokenId, scoreKeys[i], scores[i][j]);
+            }
         }
     }
 
@@ -202,9 +141,14 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
      * @param traitKey - The trait key
      * @param value - The trait value
      */
-    function setTrait(uint256 tokenId, bytes32 traitKey, bytes32 value) internal override {
-        _requireOwned(tokenId);
-        DynamicTraits.setTrait(tokenId, traitKey, value);
+    function setTrait(uint256 tokenId, bytes32 traitKey, uint256 value) public {
+        if (msg.sender != _requireOwned(tokenId)) {
+            revert NotOwner();
+        }
+        if (!unlockedTraits[tokenId][traitKey][value]) {
+            revert TraitNotUnlocked();
+        }
+        setTrait(tokenId, traitKey, bytes32(value));
     }
 
     /**
@@ -213,13 +157,19 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
      * @param traitKeys - The trait keys
      * @param values - The trait values
      */
-    function setTraits(uint256 tokenId, bytes32[] memory traitKeys, bytes32[] memory values) private {
+    function setTraits(uint256 tokenId, bytes32[] memory traitKeys, uint256[] memory values) public {
         uint256 length = traitKeys.length;
         if (length != values.length) {
             revert TraitKeysAndValuesLengthMismatch();
         }
+        if (msg.sender != _requireOwned(tokenId)) {
+            revert NotOwner();
+        }
         for (uint256 i = 0; i < length; i++) {
-            setTrait(tokenId, traitKeys[i], values[i]);
+            if (!unlockedTraits[tokenId][traitKeys[i]][values[i]]) {
+                revert TraitNotUnlocked();
+            }
+            setTrait(tokenId, traitKeys[i], bytes32(values[i]));
         }
     }
 

@@ -13,7 +13,7 @@ interface IERC7496 {
     event TraitMetadataURIUpdated();
 
     /* Errors */
-    // error TraitValueUnchanged();
+    error TraitValueUnchanged();
 
     /* Getters */
     function getTraitValue(uint256 tokenId, bytes32 traitKey) external view returns (bytes32 traitValue);
