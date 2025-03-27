@@ -70,10 +70,10 @@ contract DynamicTraits is IERC7496 {
      */
     function setTrait(uint256 tokenId, bytes32 traitKey, bytes32 newValue) internal virtual {
         // Revert if the new value is the same as the existing value.
-        // bytes32 existingValue = DynamicTraitsStorage.layout()._traits[tokenId][traitKey];
-        // if (existingValue == newValue) {
-        //     revert TraitValueUnchanged();
-        // }
+        bytes32 existingValue = DynamicTraitsStorage.layout()._traits[tokenId][traitKey];
+        if (existingValue == newValue) {
+            revert TraitValueUnchanged();
+        }
 
         // Set the new trait value.
         _setTrait(tokenId, traitKey, newValue);
