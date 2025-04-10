@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {ERC721EnumerableUpgradeable} from
     "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {KRNL} from "./KRNL.sol";
@@ -11,7 +12,7 @@ import {DynamicTraits} from "./erc-7496/DynamicTraits.sol";
 /**
  * @dev Implementation of an ERC721 with metadata
  */
-contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
+contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
     /// @notice The token ID counter
     uint256 public currentSupply;
     /// @notice The maximum number of tokens
@@ -243,5 +244,30 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, OwnableUpgradeable, KRNL, Dynam
     {
         return
             ERC721EnumerableUpgradeable.supportsInterface(interfaceId) || DynamicTraits.supportsInterface(interfaceId);
+    }
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /**
+     * @dev See {ERC721-_update}.
+     *
+     * Requirements:
+     *
+     * - the contract must not be paused.
+     */
+    function _update(address to, uint256 tokenId, address auth)
+        internal
+        virtual
+        override
+        whenNotPaused
+        returns (address)
+    {
+        return super._update(to, tokenId, auth);
     }
 }
