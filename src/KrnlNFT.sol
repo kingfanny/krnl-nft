@@ -33,6 +33,7 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
     error NotOwner();
     error TraitKeysAndValuesLengthMismatch();
     error TraitNotUnlocked();
+    error NotWhiteListed();
 
     /**
      * @dev Initialize KrnlNFT
@@ -78,6 +79,7 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
         KernelResponse[] memory kernelResponses = abi.decode(krnlPayload.kernelResponses, (KernelResponse[]));
 
         uint256 gitCoinScore = 0;
+        bool whiteListed = false;
 
         for (uint256 i = 0; i < kernelResponses.length; i++) {
             emit LogKernelResponse(kernelResponses[i].kernelId, kernelResponses[i].result);
@@ -89,8 +91,20 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
                     emit ErrorLog("Invalid gitcoin score decoding");
                 }
             }
+
+            if (kernelResponses[i].kernelId == 340) {
+                if (kernelResponses[i].result.length >= 32) {
+                    whiteListed = abi.decode(kernelResponses[i].result, (bool));
+                } else {
+                    emit ErrorLog("Invalid whiteListed value decoding");
+                }
+            }
         }
-        updateMetadata(scoreKeys, scores, receiver, tokenId);
+        if (whiteListed) {
+            updateMetadata(scoreKeys, scores, receiver, tokenId);
+        } else {
+            revert NotWhiteListed();
+        }
         return false;
     }
 
