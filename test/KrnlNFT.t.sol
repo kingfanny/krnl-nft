@@ -24,7 +24,7 @@ contract KrnlNFTTest is Test {
         address proxy = Upgrades.deployTransparentProxy(
             "KrnlTestNFT.sol",
             msg.sender,
-            abi.encodeCall(KrnlTestNFT.initialize, (traitMetadataURI, contractURI, 1, tokenAuthorityPublicKey))
+            abi.encodeCall(KrnlTestNFT.initialize, (traitMetadataURI, contractURI, maxSupply, tokenAuthorityPublicKey))
         );
         vm.stopPrank();
         krnlNFT = KrnlTestNFT(proxy);
@@ -37,7 +37,7 @@ contract KrnlNFTTest is Test {
     function test_base() public view {
         assertEq(krnlNFT.getTraitMetadataURI(), traitMetadataURI);
         assertEq(krnlNFT.contractURI(), contractURI);
-        assertEq(krnlNFT.maxSupply(), 1);
+        assertEq(krnlNFT.maxSupply(), maxSupply);
         assertEq(krnlNFT.owner(), owner);
         assertEq(krnlNFT.tokenAuthorityPublicKey(), tokenAuthorityPublicKey);
     }
@@ -142,12 +142,12 @@ contract KrnlNFTTest is Test {
     }
 
     function set_variables() private {
-        owner = vm.addr(vm.envUint("PRIVATE_KEY"));
+        owner = makeAddr("owner");
         user = makeAddr("user");
-        tokenAuthorityPublicKey = vm.envAddress("TOKEN_AUTHORITY_PUBLIC_KEY");
-        traitMetadataURI = vm.envString("TRAIT_METADATA_URI");
-        contractURI = vm.envString("CONTRACT_URI");
-        maxSupply = vm.envUint("MAX_SUPPLY");
+        tokenAuthorityPublicKey = 0x13EAac99B0D64aA0A4D2706e913C9cC9De29C39c;
+        traitMetadataURI = "https://example.com/trait-metadata";
+        contractURI = "https://example.com/contract-metadata";
+        maxSupply = 1;
 
         scoreKeys = new bytes32[](2);
         scoreKeys[0] = bytes32(0xc25944813c866e92e5765a2f9bd2b4b96895f01134582d2fb0e40cce48e6308a);
