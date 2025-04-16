@@ -22,6 +22,7 @@ contract DeployScript is Script {
 
         // Get the implementation address
         address implementationAddress = Upgrades.getImplementationAddress(_proxyAddress);
+        KrnlNFT(_proxyAddress).pause();
 
         vm.stopBroadcast();
 

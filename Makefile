@@ -46,11 +46,7 @@ coverage-html:
 	@echo "Running coverage..."
 	forge build;\
 	forge coverage --report lcov --fork-url ${FORK_URL}
-	@if [ "`uname`" = "Darwin" ]; then \
-		lcov --ignore-errors inconsistent --remove lcov.info 'script/*' 'test/*' --output-file lcov.info; \
-		genhtml --ignore-errors inconsistent -o coverage-report lcov.info; \
-	else \
-		lcov --remove lcov.info 'script/*' 'test/*' --output-file lcov.info; \
-		genhtml -o coverage-report lcov.info; \
-	fi
+	@echo "Analyzing..."
+	lcov --remove lcov.info 'script/*' 'src/KrnlNFT.sol' 'src/KRNL.sol' --output-file lcov.info; \
+	genhtml -o coverage-report lcov.info;
 	@echo "Coverage report generated at coverage-report/index.html"
