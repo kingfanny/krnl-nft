@@ -12,7 +12,7 @@ import {DynamicTraits} from "./erc-7496/DynamicTraits.sol";
 /**
  * @dev Implementation of an ERC721 with metadata
  */
-contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
+contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
     /// @notice The token ID counter
     uint256 public currentSupply;
     /// @notice The maximum number of tokens
@@ -22,19 +22,14 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
     /// @notice The unlocked traits
     mapping(uint256 => mapping(bytes32 => mapping(uint256 => bool))) public unlockedTraits;
 
-    event LogKrnlPayload(bytes kernelResponses, bytes kernelParams);
-    event LogKernelResponse(uint256 kernelId, bytes result);
-    event ErrorLog(string message);
     event ContractURIUpdated();
     event TraitUnlocked(uint256 tokenId, bytes32 traitKey, uint256 traitId);
 
     error MaxSupplyReached();
-    error KernelResponsesEmpty();
     error NotOwner();
     error TokenDoesNotExist();
     error TraitKeysAndValuesLengthMismatch();
     error TraitNotUnlocked();
-    error NotWhiteListed();
 
     /**
      * @dev Initialize KrnlNFT
@@ -59,54 +54,15 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
 
     /**
      * @dev Protected function to update the metadata for an NFT
-     * @param krnlPayload - The KrnlPayload
      * @param scoreKeys - The score keys
      * @param scores - The scores
      * @param receiver - The address of the receiver
      * @param tokenId - The token ID
      */
-    function protectedFunction(
-        KrnlPayload memory krnlPayload,
-        bytes32[] memory scoreKeys,
-        uint256[][] memory scores,
-        address receiver,
-        uint256 tokenId
-    ) external onlyAuthorized(krnlPayload, abi.encode(scoreKeys, scores, receiver, tokenId)) returns (bool) {
-        if (krnlPayload.kernelResponses.length == 0) {
-            revert KernelResponsesEmpty();
-        }
-        emit LogKrnlPayload(krnlPayload.kernelResponses, krnlPayload.kernelParams);
-
-        KernelResponse[] memory kernelResponses = abi.decode(krnlPayload.kernelResponses, (KernelResponse[]));
-
-        uint256 gitCoinScore = 0;
-        bool whiteListed = false;
-
-        for (uint256 i = 0; i < kernelResponses.length; i++) {
-            emit LogKernelResponse(kernelResponses[i].kernelId, kernelResponses[i].result);
-
-            if (kernelResponses[i].kernelId == 1328) {
-                if (kernelResponses[i].result.length >= 32) {
-                    gitCoinScore = abi.decode(kernelResponses[i].result, (uint256));
-                } else {
-                    emit ErrorLog("Invalid gitcoin score decoding");
-                }
-            }
-
-            if (kernelResponses[i].kernelId == 340) {
-                if (kernelResponses[i].result.length >= 32) {
-                    whiteListed = abi.decode(kernelResponses[i].result, (bool));
-                } else {
-                    emit ErrorLog("Invalid whiteListed value decoding");
-                }
-            }
-        }
-        if (whiteListed) {
-            updateMetadata(scoreKeys, scores, receiver, tokenId);
-        } else {
-            revert NotWhiteListed();
-        }
-        return false;
+    function protectedFunction(bytes32[] memory scoreKeys, uint256[][] memory scores, address receiver, uint256 tokenId)
+        external
+    {
+        updateMetadata(scoreKeys, scores, receiver, tokenId);
     }
 
     /**
