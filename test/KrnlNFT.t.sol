@@ -161,7 +161,7 @@ contract KrnlNFTTest is Test {
         scoreKeys = new bytes32[](3);
         scoreKeys[0] = bytes32(0xc25944813c866e92e5765a2f9bd2b4b96895f01134582d2fb0e40cce48e6308a);
         scoreKeys[1] = bytes32(0x5c6e2bcdeba7803e1b8f008ce801be58fb6351dd999420b0041be2e6df5f9c5f);
-        scoreKeys[2] = keccak256("0");
+        scoreKeys[2] = keccak256("tribe");
         scores = new uint256[][](3);
         scores[0] = new uint256[](3);
         scores[0][0] = 1;
