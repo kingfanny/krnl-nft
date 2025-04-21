@@ -54,13 +54,15 @@ contract KrnlNFTTest is Test {
     }
 
     function test_setTraits() public {
-        uint256[] memory values = new uint256[](2);
+        uint256[] memory values = new uint256[](3);
         values[0] = 1;
         values[1] = 1;
-        uint256[] memory values2 = new uint256[](3);
+        values[2] = 1;
+        uint256[] memory values2 = new uint256[](4);
         values2[0] = 1;
         values2[1] = 2;
         values2[2] = 3;
+        values2[3] = 1;
 
         vm.startPrank(owner);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.NotOwner.selector));
@@ -72,7 +74,7 @@ contract KrnlNFTTest is Test {
         vm.startPrank(user);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TraitNotUnlocked.selector));
         krnlNFT.setTraits(0, scoreKeys, values);
-        vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TraitKeysAndValuesLengthMismatch.selector));
+        vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.ArrayLengthMismatch.selector));
         krnlNFT.setTraits(0, scoreKeys, values2);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TraitNotUnlocked.selector));
         krnlNFT.setTrait(0, scoreKeys[1], values[1]);
@@ -81,23 +83,30 @@ contract KrnlNFTTest is Test {
         krnlNFT.setTraits(0, scoreKeys, values);
         values[1] = 3;
         krnlNFT.setTrait(0, scoreKeys[1], values[1]);
+        values[2] = 1;
+        vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TribeTraitAlreadySet.selector));
+        krnlNFT.setTrait(0, scoreKeys[2], values[2]);
         vm.stopPrank();
     }
 
     function test_getTraits() public {
-        uint256[] memory values = new uint256[](2);
+        uint256[] memory values = new uint256[](3);
         values[0] = 1;
         values[1] = 2;
+        values[2] = 1;
         vm.startPrank(user);
         krnlNFT.setTraits(0, scoreKeys, values);
         vm.stopPrank();
         bytes32[] memory traitValues = krnlNFT.getTraitValues(0, scoreKeys);
         assertEq(traitValues[0], bytes32(uint256(1)));
         assertEq(traitValues[1], bytes32(uint256(2)));
+        assertEq(traitValues[2], bytes32(uint256(1)));
         traitValues[0] = krnlNFT.getTraitValue(0, scoreKeys[0]);
         traitValues[1] = krnlNFT.getTraitValue(0, scoreKeys[1]);
+        traitValues[2] = krnlNFT.getTraitValue(0, scoreKeys[2]);
         assertEq(traitValues[0], bytes32(uint256(1)));
         assertEq(traitValues[1], bytes32(uint256(2)));
+        assertEq(traitValues[2], bytes32(uint256(1)));
     }
 
     function test_setTraitMetadataURI() public {
@@ -149,10 +158,11 @@ contract KrnlNFTTest is Test {
         contractURI = "https://example.com/contract-metadata";
         maxSupply = 1;
 
-        scoreKeys = new bytes32[](2);
+        scoreKeys = new bytes32[](3);
         scoreKeys[0] = bytes32(0xc25944813c866e92e5765a2f9bd2b4b96895f01134582d2fb0e40cce48e6308a);
         scoreKeys[1] = bytes32(0x5c6e2bcdeba7803e1b8f008ce801be58fb6351dd999420b0041be2e6df5f9c5f);
-        scores = new uint256[][](2);
+        scoreKeys[2] = keccak256("0");
+        scores = new uint256[][](3);
         scores[0] = new uint256[](3);
         scores[0][0] = 1;
         scores[0][1] = 2;
@@ -160,5 +170,8 @@ contract KrnlNFTTest is Test {
         scores[1] = new uint256[](2);
         scores[1][0] = 2;
         scores[1][1] = 3;
+        scores[2] = new uint256[](2);
+        scores[2][0] = 1;
+        scores[2][1] = 2;
     }
 }

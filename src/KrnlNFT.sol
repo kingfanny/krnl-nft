@@ -35,6 +35,7 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
     error ArrayLengthMismatch();
     error TraitNotUnlocked();
     error NotWhiteListed();
+    error TribeTraitAlreadySet();
 
     /**
      * @dev Initialize KrnlNFT
@@ -160,6 +161,9 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
      * @param value - The trait value
      */
     function setTrait(uint256 tokenId, bytes32 traitKey, uint256 value) public {
+        if (traitKey == keccak256("0") && getTraitValue(tokenId, traitKey) != 0) {
+            revert TribeTraitAlreadySet();
+        }
         if (msg.sender != _requireOwned(tokenId)) {
             revert NotOwner();
         }
@@ -184,6 +188,9 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
             revert NotOwner();
         }
         for (uint256 i = 0; i < length; i++) {
+            if (traitKeys[i] == keccak256("0") && getTraitValue(tokenId, traitKeys[i]) != 0) {
+                revert TribeTraitAlreadySet();
+            }
             if (!unlockedTraits[tokenId][traitKeys[i]][values[i]]) {
                 revert TraitNotUnlocked();
             }
