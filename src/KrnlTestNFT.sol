@@ -28,8 +28,9 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
     error MaxSupplyReached();
     error NotOwner();
     error TokenDoesNotExist();
-    error TraitKeysAndValuesLengthMismatch();
+    error ArrayLengthMismatch();
     error TraitNotUnlocked();
+    error TribeTraitAlreadySet();
 
     /**
      * @dev Initialize KrnlNFT
@@ -86,7 +87,7 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
         }
         uint256 length = scoreKeys.length;
         if (length != scores.length) {
-            revert TraitKeysAndValuesLengthMismatch();
+            revert ArrayLengthMismatch();
         }
         for (uint256 i = 0; i < length; i++) {
             uint256 scoreLength = scores[i].length;
@@ -116,6 +117,9 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
      * @param value - The trait value
      */
     function setTrait(uint256 tokenId, bytes32 traitKey, uint256 value) public {
+        if (traitKey == keccak256("tribe") && getTraitValue(tokenId, traitKey) != 0) {
+            revert TribeTraitAlreadySet();
+        }
         if (msg.sender != _requireOwned(tokenId)) {
             revert NotOwner();
         }
@@ -134,12 +138,15 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
     function setTraits(uint256 tokenId, bytes32[] memory traitKeys, uint256[] memory values) public {
         uint256 length = traitKeys.length;
         if (length != values.length) {
-            revert TraitKeysAndValuesLengthMismatch();
+            revert ArrayLengthMismatch();
         }
         if (msg.sender != _requireOwned(tokenId)) {
             revert NotOwner();
         }
         for (uint256 i = 0; i < length; i++) {
+            if (traitKeys[i] == keccak256("tribe") && getTraitValue(tokenId, traitKeys[i]) != 0) {
+                revert TribeTraitAlreadySet();
+            }
             if (!unlockedTraits[tokenId][traitKeys[i]][values[i]]) {
                 revert TraitNotUnlocked();
             }
