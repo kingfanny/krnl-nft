@@ -63,9 +63,13 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
      * @param tokenId - The token ID
      * @param tribeId - The tribe ID
      */
-    function protectedFunction(bytes32[] memory scoreKeys, uint256[][] memory scores, address receiver, uint256 tokenId, uint256 tribeId)
-        external
-    {
+    function protectedFunction(
+        bytes32[] memory scoreKeys,
+        uint256[][] memory scores,
+        address receiver,
+        uint256 tokenId,
+        uint256 tribeId
+    ) external {
         updateMetadata(scoreKeys, scores, receiver, tokenId, tribeId);
     }
 
@@ -77,9 +81,13 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
      * @param tokenId - The token ID
      * @param tribeId - The tribe ID
      */
-    function updateMetadata(bytes32[] memory scoreKeys, uint256[][] memory scores, address receiver, uint256 tokenId, uint256 tribeId)
-        private
-    {
+    function updateMetadata(
+        bytes32[] memory scoreKeys,
+        uint256[][] memory scores,
+        address receiver,
+        uint256 tokenId,
+        uint256 tribeId
+    ) private {
         if (tokenId > maxSupply) {
             revert TokenDoesNotExist();
         }
