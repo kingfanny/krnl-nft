@@ -72,7 +72,7 @@ contract KrnlNFTTest is Test {
         vm.startPrank(user);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TraitNotUnlocked.selector));
         krnlNFT.setTraits(0, scoreKeys, values);
-        vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TraitKeysAndValuesLengthMismatch.selector));
+        vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.ArrayLengthMismatch.selector));
         krnlNFT.setTraits(0, scoreKeys, values2);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TraitNotUnlocked.selector));
         krnlNFT.setTrait(0, scoreKeys[1], values[1]);

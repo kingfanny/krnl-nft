@@ -28,7 +28,7 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
     error MaxSupplyReached();
     error NotOwner();
     error TokenDoesNotExist();
-    error TraitKeysAndValuesLengthMismatch();
+    error ArrayLengthMismatch();
     error TraitNotUnlocked();
 
     /**
@@ -86,7 +86,7 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
         }
         uint256 length = scoreKeys.length;
         if (length != scores.length) {
-            revert TraitKeysAndValuesLengthMismatch();
+            revert ArrayLengthMismatch();
         }
         for (uint256 i = 0; i < length; i++) {
             uint256 scoreLength = scores[i].length;
@@ -134,7 +134,7 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
     function setTraits(uint256 tokenId, bytes32[] memory traitKeys, uint256[] memory values) public {
         uint256 length = traitKeys.length;
         if (length != values.length) {
-            revert TraitKeysAndValuesLengthMismatch();
+            revert ArrayLengthMismatch();
         }
         if (msg.sender != _requireOwned(tokenId)) {
             revert NotOwner();
