@@ -163,7 +163,7 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
         if (msg.sender != _requireOwned(tokenId)) {
             revert NotOwner();
         }
-        if (!unlockedTraits[tokenId][traitKey][value]) {
+        if (!unlockedTraits[tokenId][traitKey][value] && value != 0) {
             revert TraitNotUnlocked();
         }
         setTrait(tokenId, traitKey, bytes32(value));
@@ -184,7 +184,7 @@ contract KrnlNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpg
             revert NotOwner();
         }
         for (uint256 i = 0; i < length; i++) {
-            if (!unlockedTraits[tokenId][traitKeys[i]][values[i]]) {
+            if (!unlockedTraits[tokenId][traitKeys[i]][values[i]] && values[i] != 0) {
                 revert TraitNotUnlocked();
             }
             setTrait(tokenId, traitKeys[i], bytes32(values[i]));
