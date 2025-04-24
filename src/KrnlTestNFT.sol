@@ -13,6 +13,8 @@ import {DynamicTraits} from "./erc-7496/DynamicTraits.sol";
  * @dev Implementation of an ERC721 with metadata
  */
 contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, OwnableUpgradeable, KRNL, DynamicTraits {
+    /// @notice The trait key for the tribe trait
+    bytes32 public constant TRIBE_TRAIT = keccak256("tribe");
     /// @notice The token ID counter
     uint256 public currentSupply;
     /// @notice The maximum number of tokens
@@ -28,8 +30,9 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
     error MaxSupplyReached();
     error NotOwner();
     error TokenDoesNotExist();
-    error TraitKeysAndValuesLengthMismatch();
+    error ArrayLengthMismatch();
     error TraitNotUnlocked();
+    error TribeCannotBeSet();
 
     /**
      * @dev Initialize KrnlNFT
@@ -58,11 +61,16 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
      * @param scores - The scores
      * @param receiver - The address of the receiver
      * @param tokenId - The token ID
+     * @param tribeId - The tribe ID
      */
-    function protectedFunction(bytes32[] memory scoreKeys, uint256[][] memory scores, address receiver, uint256 tokenId)
-        external
-    {
-        updateMetadata(scoreKeys, scores, receiver, tokenId);
+    function protectedFunction(
+        bytes32[] memory scoreKeys,
+        uint256[][] memory scores,
+        address receiver,
+        uint256 tokenId,
+        uint256 tribeId
+    ) external {
+        updateMetadata(scoreKeys, scores, receiver, tokenId, tribeId);
     }
 
     /**
@@ -71,22 +79,28 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
      * @param scores - The scores
      * @param receiver - The address of the receiver
      * @param tokenId - The token ID
+     * @param tribeId - The tribe ID
      */
-    function updateMetadata(bytes32[] memory scoreKeys, uint256[][] memory scores, address receiver, uint256 tokenId)
-        private
-    {
+    function updateMetadata(
+        bytes32[] memory scoreKeys,
+        uint256[][] memory scores,
+        address receiver,
+        uint256 tokenId,
+        uint256 tribeId
+    ) private {
+        if (tokenId > maxSupply) {
+            revert TokenDoesNotExist();
+        }
+        if (tokenId < currentSupply && receiver != ownerOf(tokenId)) {
+            revert NotOwner();
+        }
         if (tokenId == currentSupply) {
             mint(receiver);
-        } else if (tokenId < currentSupply) {
-            if (receiver != ownerOf(tokenId)) {
-                revert NotOwner();
-            }
-        } else {
-            revert TokenDoesNotExist();
+            setTrait(tokenId, TRIBE_TRAIT, bytes32(tribeId));
         }
         uint256 length = scoreKeys.length;
         if (length != scores.length) {
-            revert TraitKeysAndValuesLengthMismatch();
+            revert ArrayLengthMismatch();
         }
         for (uint256 i = 0; i < length; i++) {
             uint256 scoreLength = scores[i].length;
@@ -119,7 +133,10 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
         if (msg.sender != _requireOwned(tokenId)) {
             revert NotOwner();
         }
-        if (!unlockedTraits[tokenId][traitKey][value]) {
+        if (traitKey == TRIBE_TRAIT) {
+            revert TribeCannotBeSet();
+        }
+        if (!unlockedTraits[tokenId][traitKey][value] && value != 0) {
             revert TraitNotUnlocked();
         }
         setTrait(tokenId, traitKey, bytes32(value));
@@ -134,13 +151,16 @@ contract KrnlTestNFT is ERC721EnumerableUpgradeable, PausableUpgradeable, Ownabl
     function setTraits(uint256 tokenId, bytes32[] memory traitKeys, uint256[] memory values) public {
         uint256 length = traitKeys.length;
         if (length != values.length) {
-            revert TraitKeysAndValuesLengthMismatch();
+            revert ArrayLengthMismatch();
         }
         if (msg.sender != _requireOwned(tokenId)) {
             revert NotOwner();
         }
         for (uint256 i = 0; i < length; i++) {
-            if (!unlockedTraits[tokenId][traitKeys[i]][values[i]]) {
+            if (traitKeys[i] == TRIBE_TRAIT) {
+                revert TribeCannotBeSet();
+            }
+            if (!unlockedTraits[tokenId][traitKeys[i]][values[i]] && values[i] != 0) {
                 revert TraitNotUnlocked();
             }
             setTrait(tokenId, traitKeys[i], bytes32(values[i]));

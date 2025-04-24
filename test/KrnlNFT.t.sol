@@ -30,7 +30,7 @@ contract KrnlNFTTest is Test {
         krnlNFT = KrnlTestNFT(proxy);
 
         vm.startPrank(user);
-        krnlNFT.protectedFunction(scoreKeys, scores, user, 0);
+        krnlNFT.protectedFunction(scoreKeys, scores, user, 0, 1);
         vm.stopPrank();
     }
 
@@ -40,16 +40,17 @@ contract KrnlNFTTest is Test {
         assertEq(krnlNFT.maxSupply(), maxSupply);
         assertEq(krnlNFT.owner(), owner);
         assertEq(krnlNFT.tokenAuthorityPublicKey(), tokenAuthorityPublicKey);
+        assertEq(krnlNFT.getTraitValue(0, krnlNFT.TRIBE_TRAIT()), bytes32(uint256(1)));
     }
 
     function test_protectedFunction() public {
         vm.startPrank(user);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TokenDoesNotExist.selector));
-        krnlNFT.protectedFunction(scoreKeys, scores, user, 2);
+        krnlNFT.protectedFunction(scoreKeys, scores, user, 2, 1);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.MaxSupplyReached.selector));
-        krnlNFT.protectedFunction(scoreKeys, scores, user, 1);
+        krnlNFT.protectedFunction(scoreKeys, scores, user, 1, 1);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.NotOwner.selector));
-        krnlNFT.protectedFunction(scoreKeys, scores, owner, 0);
+        krnlNFT.protectedFunction(scoreKeys, scores, owner, 0, 1);
         vm.stopPrank();
     }
 
@@ -72,10 +73,12 @@ contract KrnlNFTTest is Test {
         vm.startPrank(user);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TraitNotUnlocked.selector));
         krnlNFT.setTraits(0, scoreKeys, values);
-        vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TraitKeysAndValuesLengthMismatch.selector));
+        vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.ArrayLengthMismatch.selector));
         krnlNFT.setTraits(0, scoreKeys, values2);
         vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TraitNotUnlocked.selector));
         krnlNFT.setTrait(0, scoreKeys[1], values[1]);
+        vm.expectRevert(abi.encodeWithSelector(KrnlTestNFT.TribeCannotBeSet.selector));
+        krnlNFT.setTrait(0, keccak256("tribe"), 1);
 
         values[1] = 2;
         krnlNFT.setTraits(0, scoreKeys, values);
